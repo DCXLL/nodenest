@@ -13,10 +13,10 @@ import { User } from './user/entities/user.entity';
     // TypeOrmModule.forRoot(), // 连接方式失败
     TypeOrmModule.forRoot({
       type: 'mysql',
-      host: 'localhost',
+      host: '121.4.63.175',
       port: 3306,
       username: 'root',
-      password: 'admin',
+      password: 'ISHSwyma>7GG',
       database: 'nest',
       entities: [User],
       synchronize: false,
