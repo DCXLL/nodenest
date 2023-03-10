@@ -1,3 +1,6 @@
+/**
+ * User表实体
+*/
 import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
@@ -8,7 +11,7 @@ export class User {
   @Column()
   username: string;
 
-  @Column()
+  @Column({ select: false})
   password: string;
   
   @Column({

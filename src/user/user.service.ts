@@ -1,5 +1,5 @@
 import { User } from './entities/user.entity';
-import { Injectable } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -10,95 +10,59 @@ export class UserService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
   ) {}
-  
+  responseFormat(result = undefined) {
+    return {
+      status: 0,
+      message: 'Success',
+      result,
+    };
+  }
   async create(createUserDto: CreateUserDto) {
     const { username, password } = createUserDto;
-    let [status, message] = [0, '创建成功'];
-
     if (!username) {
-      status = -1;
-      message = '用户名不能为空';
-      return {
-        status,
-        message,
-      };
+      throw new HttpException('请输入用户名', HttpStatus.ACCEPTED);
     } else if (!password) {
-      status = -2;
-      message = '密码不能为空';
-      return {
-        status,
-        message,
-      };
+      throw new HttpException('请输入密码', HttpStatus.ACCEPTED);
     }
 
     const existUser = await this.userRepository.findOne({
       where: { username },
     });
     if (existUser) {
-      status = 1;
-      message = '用户名已存在';
-      return {
-        status,
-        message,
-      };
+      throw new HttpException('用户名已存在', HttpStatus.CONFLICT);
     }
     const newUser = await this.userRepository.create(createUserDto);
     const res = await this.userRepository.save(newUser);
     if (!res.id) {
-      return {
-        status:-3,
-        message:'创建失败'
-      };
+      throw new HttpException('创建失败', HttpStatus.CREATED);
     }
-    return {
-      status,
-      message,
-    };
+    return this.responseFormat();
   }
 
   async update(id: any, updateUserDto: UpdateUserDto) {
     const existUser = await this.userRepository.findOneBy({ id });
     if (!existUser) {
-      return {
-        status: -1,
-        message: '用户不存在',
-      };
+      throw new HttpException('用户名已存在', HttpStatus.CREATED);
     }
     const updatePost = this.userRepository.merge(existUser, updateUserDto);
     return this.userRepository.save(updatePost);
   }
 
   async findAll() {
-    const res =  await this.userRepository.find();
-    return {
-        status:0,
-        message:'成功',
-        result:{
-            data:res
-        }
-    }
+    const res = await this.userRepository.find();
+    return this.responseFormat(res);
   }
 
   async findOne(id: number) {
     const res = await this.userRepository.findOneBy({ id });
-    return {
-        status:0,
-        message:'成功',
-        result:res
-    }
+    return this.responseFormat(res);
   }
 
   async remove(id: number) {
-     const res =  await this.userRepository.delete(id);
-     if(res.affected) {
-        return {
-            status: 0,
-            message: '删除成功',
-         }
-     }
-     return {
-        status: -1,
-        message: '删除失败',
-     }
+    const res = await this.userRepository.delete(id);
+    if (res.affected) {
+      return this.responseFormat();
+    }
+    throw new HttpException('删除失败', HttpStatus.CREATED);
   }
 }
